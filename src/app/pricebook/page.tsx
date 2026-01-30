@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout';
 import { Card, CardContent, Button, Input, Modal, Select } from '@/components/ui';
 import { useData } from '@/lib/DataContext';
@@ -9,10 +10,18 @@ import { Plus, Search, Tag } from 'lucide-react';
 import type { ServiceFormData } from '@/lib/types';
 
 function PriceBookContent() {
+  const searchParams = useSearchParams();
   const { services, addService, updateService, loading } = useData();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
+
+  // Auto-open modal if ?new=true
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setShowModal(true);
+    }
+  }, [searchParams]);
   const [editingService, setEditingService] = useState<typeof services[0] | null>(null);
   const [form, setForm] = useState<ServiceFormData>({
     category: SERVICE_CATEGORIES[0],
@@ -185,7 +194,9 @@ function PriceBookContent() {
 export default function PriceBookPage() {
   return (
     <AppShell>
-      <PriceBookContent />
+      <Suspense fallback={<div className="p-6 text-gray-500">Loading...</div>}>
+        <PriceBookContent />
+      </Suspense>
     </AppShell>
   );
 }

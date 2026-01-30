@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout';
 import { Card, CardContent, Button, Input, Modal } from '@/components/ui';
 import { useData } from '@/lib/DataContext';
@@ -10,9 +11,17 @@ import Link from 'next/link';
 import type { CustomerFormData } from '@/lib/types';
 
 function CustomersContent() {
+  const searchParams = useSearchParams();
   const { customers, addCustomer, updateCustomer, loading } = useData();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+
+  // Auto-open modal if ?new=true
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setShowModal(true);
+    }
+  }, [searchParams]);
   const [editingCustomer, setEditingCustomer] = useState<typeof customers[0] | null>(null);
   const [form, setForm] = useState<CustomerFormData>({
     first_name: '',
@@ -203,7 +212,9 @@ function CustomersContent() {
 export default function CustomersPage() {
   return (
     <AppShell>
-      <CustomersContent />
+      <Suspense fallback={<div className="p-6 text-gray-500">Loading...</div>}>
+        <CustomersContent />
+      </Suspense>
     </AppShell>
   );
 }

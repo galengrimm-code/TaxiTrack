@@ -48,7 +48,7 @@ function AppShellContent({ children }: { children: ReactNode }) {
             <div className="font-medium text-gray-900 text-sm sm:text-base">New Customer</div>
           </a>
           <a
-            href="/estimates?new=true"
+            href="/estimates/new"
             className="p-4 sm:p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-center"
           >
             <div className="text-2xl mb-2">📝</div>
