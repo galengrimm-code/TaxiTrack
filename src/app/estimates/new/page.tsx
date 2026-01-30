@@ -3,16 +3,16 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout';
-import { Card, CardContent, Button, Input, Select } from '@/components/ui';
+import { Card, CardContent, Button, Input, Select, Modal } from '@/components/ui';
 import { useData } from '@/lib/DataContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, SERVICE_CATEGORIES } from '@/lib/utils';
 import { ArrowLeft, Plus, Trash2, Search, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import type { LineItemFormData, Service } from '@/lib/types';
+import type { LineItemFormData, Service, ServiceFormData } from '@/lib/types';
 
 function NewEstimateContent() {
   const router = useRouter();
-  const { customers, services, categories, species: speciesLookup, mountTypes, addEstimate, loading } = useData();
+  const { customers, services, categories, species: speciesLookup, mountTypes, addEstimate, addService, loading } = useData();
   const [saving, setSaving] = useState(false);
 
   // Form state
@@ -24,6 +24,17 @@ function NewEstimateContent() {
   // Service selector state
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSpecies, setSelectedSpecies] = useState('');
+
+  // Quick-add modals
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+  const [addingService, setAddingService] = useState(false);
+  const [newServiceForm, setNewServiceForm] = useState<ServiceFormData>({
+    category: '',
+    species: '',
+    mount_type: '',
+    description: '',
+    base_price: 0,
+  });
 
   // Get categories sorted by sort_order
   const categoryList = useMemo(() => {
@@ -62,6 +73,46 @@ function NewEstimateContent() {
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedSpecies('');
+  };
+
+  // Open add service modal with pre-filled category/species
+  const openAddServiceModal = () => {
+    setNewServiceForm({
+      category: selectedCategory,
+      species: selectedSpecies,
+      mount_type: '',
+      description: '',
+      base_price: 0,
+    });
+    setShowAddServiceModal(true);
+  };
+
+  // Handle adding a new service
+  const handleAddService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (addingService) return;
+
+    setAddingService(true);
+    try {
+      const newService = await addService(newServiceForm);
+      // Auto-add the new service to line items
+      if (newService) {
+        setLineItems(prev => [...prev, {
+          service_id: newService.service_id,
+          description: newService.description,
+          species: newService.species,
+          mount_type: newService.mount_type,
+          quantity: 1,
+          unit_price: newService.base_price,
+        }]);
+        // Update selected category/species to match new service
+        setSelectedCategory(newService.category);
+        setSelectedSpecies(newService.species);
+      }
+      setShowAddServiceModal(false);
+    } finally {
+      setAddingService(false);
+    }
   };
 
   // Filter customers
@@ -295,6 +346,20 @@ function NewEstimateContent() {
                   </select>
                 </div>
               </div>
+
+              {/* Quick Add Service Button */}
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={openAddServiceModal}
+                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Service
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -404,6 +469,58 @@ function NewEstimateContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Service Modal */}
+      <Modal
+        open={showAddServiceModal}
+        onClose={() => setShowAddServiceModal(false)}
+        title="Add New Service"
+      >
+        <form onSubmit={handleAddService} className="space-y-4">
+          <Select
+            label="Category"
+            value={newServiceForm.category}
+            onChange={(e) => setNewServiceForm({ ...newServiceForm, category: e.target.value })}
+            options={SERVICE_CATEGORIES.map(c => ({ value: c, label: c }))}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Species"
+              value={newServiceForm.species}
+              onChange={(e) => setNewServiceForm({ ...newServiceForm, species: e.target.value })}
+              placeholder="e.g., Whitetail"
+            />
+            <Input
+              label="Mount Type"
+              value={newServiceForm.mount_type}
+              onChange={(e) => setNewServiceForm({ ...newServiceForm, mount_type: e.target.value })}
+              placeholder="e.g., Shoulder"
+            />
+          </div>
+          <Input
+            label="Description"
+            required
+            value={newServiceForm.description}
+            onChange={(e) => setNewServiceForm({ ...newServiceForm, description: e.target.value })}
+            placeholder="Full service description"
+          />
+          <Input
+            label="Base Price"
+            type="number"
+            required
+            value={newServiceForm.base_price}
+            onChange={(e) => setNewServiceForm({ ...newServiceForm, base_price: Number(e.target.value) })}
+          />
+          <div className="flex gap-3 pt-4">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddServiceModal(false)} disabled={addingService}>
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1" disabled={addingService}>
+              {addingService ? 'Adding...' : 'Add & Use Service'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
