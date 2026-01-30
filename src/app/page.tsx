@@ -129,23 +129,25 @@ function DashboardContent() {
             <h3 className="font-semibold text-gray-900 mb-4">Projects by Status</h3>
             <div className="space-y-3">
               {Object.entries(statusCounts).map(([status, count]) => (
-                <div key={status} className="flex items-center gap-3">
-                  <div className="w-24 text-sm text-gray-600">{status}</div>
-                  <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full ${
-                        status === 'Ready' ? 'bg-emerald-500' :
-                        status === 'At Tannery' ? 'bg-purple-500' :
-                        status === 'In Progress' ? 'bg-amber-500' :
-                        'bg-blue-500'
-                      }`}
-                      style={{ 
-                        width: `${activeProjects.length > 0 ? (count / activeProjects.length) * 100 : 0}%` 
-                      }}
-                    />
+                <Link key={status} href={`/projects?status=${encodeURIComponent(status)}`}>
+                  <div className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="w-24 text-sm text-gray-600">{status}</div>
+                    <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          status === 'Ready' ? 'bg-emerald-500' :
+                          status === 'At Tannery' ? 'bg-purple-500' :
+                          status === 'In Progress' ? 'bg-amber-500' :
+                          'bg-blue-500'
+                        }`}
+                        style={{
+                          width: `${activeProjects.length > 0 ? (count / activeProjects.length) * 100 : 0}%`
+                        }}
+                      />
+                    </div>
+                    <div className="w-8 text-sm font-medium text-gray-900 text-right">{count}</div>
                   </div>
-                  <div className="w-8 text-sm font-medium text-gray-900 text-right">{count}</div>
-                </div>
+                </Link>
               ))}
             </div>
           </CardContent>
