@@ -99,23 +99,73 @@ export function PrintableDocument({ children, className = '' }: { children: Reac
       {children}
       <style jsx global>{`
         @media print {
-          /* Hide non-printable elements */
+          /* Hide ALL non-printable elements */
           .print\\:hidden,
           nav,
           aside,
           header,
-          .no-print {
+          .no-print,
+          [class*="fixed"],
+          [class*="lg\\:hidden"],
+          button,
+          input,
+          .safe-area-bottom {
             display: none !important;
           }
 
+          /* Hide everything except printable document */
+          body > * {
+            display: none !important;
+          }
+
+          body {
+            display: block !important;
+          }
+
           /* Show printable document */
+          .printable-document,
+          .printable-document * {
+            display: block !important;
+            visibility: visible !important;
+          }
+
           .printable-document {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            padding: 0.5in;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            background: white !important;
+            padding: 0.25in !important;
+            margin: 0 !important;
+            z-index: 99999 !important;
+          }
+
+          /* Fix table display */
+          .printable-document table,
+          .printable-document thead,
+          .printable-document tbody,
+          .printable-document tr,
+          .printable-document th,
+          .printable-document td {
+            display: revert !important;
+          }
+
+          .printable-document .flex {
+            display: flex !important;
+          }
+
+          .printable-document .grid {
+            display: grid !important;
+          }
+
+          .printable-document .hidden {
+            display: none !important;
+          }
+
+          .printable-document .sm\\:table-cell {
+            display: table-cell !important;
           }
 
           /* Reset page margins */
