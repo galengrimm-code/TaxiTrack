@@ -38,6 +38,12 @@ function NewEstimateContent() {
     base_price: 0,
   });
 
+  // Local custom species (for species added during this session)
+  const [customSpecies, setCustomSpecies] = useState<string[]>([]);
+
+  // Feedback for added items
+  const [justAddedService, setJustAddedService] = useState<string | null>(null);
+
   // Get categories sorted by sort_order
   const categoryList = useMemo(() => {
     if (categories.length > 0) {
@@ -48,18 +54,32 @@ function NewEstimateContent() {
     return cats.map(c => ({ category_id: c, name: c, icon: '', sort_order: 0 }));
   }, [categories, services]);
 
-  // Get species for selected category
+  // Get species for selected category (including custom species added this session)
   const speciesForCategory = useMemo(() => {
     if (!selectedCategory) return [];
+
+    let speciesList: { species_id: string; category: string; name: string; sort_order: number }[] = [];
+
     if (speciesLookup.length > 0) {
-      return speciesLookup
+      speciesList = speciesLookup
         .filter(s => s.category === selectedCategory)
         .sort((a, b) => a.sort_order - b.sort_order);
+    } else {
+      // Fallback: derive from services
+      const specs = [...new Set(services.filter(s => s.is_active && s.category === selectedCategory).map(s => s.species))];
+      speciesList = specs.map(s => ({ species_id: s, category: selectedCategory, name: s || 'General', sort_order: 0 }));
     }
-    // Fallback: derive from services
-    const specs = [...new Set(services.filter(s => s.is_active && s.category === selectedCategory).map(s => s.species))];
-    return specs.map(s => ({ species_id: s, category: selectedCategory, name: s || 'General', sort_order: 0 }));
-  }, [selectedCategory, speciesLookup, services]);
+
+    // Add custom species from this session
+    const existingNames = new Set(speciesList.map(s => s.name.toLowerCase()));
+    customSpecies.forEach(cs => {
+      if (!existingNames.has(cs.toLowerCase())) {
+        speciesList.push({ species_id: `custom-${cs}`, category: selectedCategory, name: cs, sort_order: 999 });
+      }
+    });
+
+    return speciesList;
+  }, [selectedCategory, speciesLookup, services, customSpecies]);
 
   // Get services for selected category and species
   const servicesForSelection = useMemo(() => {
@@ -103,11 +123,15 @@ function NewEstimateContent() {
     }
   };
 
-  // Handle adding a new species (just sets the selected species to the new name)
+  // Handle adding a new species
   const handleAddSpecies = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newSpeciesName.trim()) {
-      setSelectedSpecies(newSpeciesName.trim());
+    const name = newSpeciesName.trim();
+    if (name) {
+      // Add to custom species list so it appears in dropdown
+      setCustomSpecies(prev => [...prev, name]);
+      // Select the new species
+      setSelectedSpecies(name);
       setShowAddSpeciesModal(false);
     }
   };
@@ -133,6 +157,9 @@ function NewEstimateContent() {
         // Update selected category/species to match new service
         setSelectedCategory(newService.category);
         setSelectedSpecies(newService.species);
+        // Show feedback
+        setJustAddedService(newService.service_id);
+        setTimeout(() => setJustAddedService(null), 3000);
       }
       setShowAddServiceModal(false);
     } finally {
@@ -385,7 +412,17 @@ function NewEstimateContent() {
           ) : (
             <div className="space-y-3">
               {lineItems.map((item, index) => (
-                <div key={index} className="p-4 bg-gray-50 rounded-xl space-y-3">
+                <div
+                  key={index}
+                  className={`p-4 rounded-xl space-y-3 transition-colors ${
+                    justAddedService && item.service_id === justAddedService
+                      ? 'bg-green-50 border-2 border-green-300'
+                      : 'bg-gray-50'
+                  }`}
+                >
+                  {justAddedService && item.service_id === justAddedService && (
+                    <div className="text-xs text-green-600 font-medium">✓ Just added to estimate</div>
+                  )}
                   <div className="flex items-start justify-between gap-3">
                     <input
                       type="text"
