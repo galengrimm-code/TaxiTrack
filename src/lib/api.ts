@@ -36,6 +36,7 @@ function getApiUrl(): string | null {
 
 /**
  * Make an API call to Google Sheets
+ * Note: Using text/plain to avoid CORS preflight with Apps Script
  */
 async function apiCall<T>(
   action: string,
@@ -50,16 +51,16 @@ async function apiCall<T>(
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, ...data }),
     });
-    
+
     const result: ApiResponse<T> = await response.json();
-    
+
     if (result.success) {
       return result.data ?? null;
     }
-    
+
     console.error('API Error:', result.error);
     return null;
   } catch (err) {
