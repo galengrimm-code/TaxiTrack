@@ -26,8 +26,10 @@ function NewEstimateContent() {
   const [selectedSpecies, setSelectedSpecies] = useState('');
 
   // Quick-add modals
+  const [showAddSpeciesModal, setShowAddSpeciesModal] = useState(false);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [addingService, setAddingService] = useState(false);
+  const [newSpeciesName, setNewSpeciesName] = useState('');
   const [newServiceForm, setNewServiceForm] = useState<ServiceFormData>({
     category: '',
     species: '',
@@ -75,16 +77,39 @@ function NewEstimateContent() {
     setSelectedSpecies('');
   };
 
-  // Open add service modal with pre-filled category/species
-  const openAddServiceModal = () => {
-    setNewServiceForm({
-      category: selectedCategory,
-      species: selectedSpecies,
-      mount_type: '',
-      description: '',
-      base_price: 0,
-    });
-    setShowAddServiceModal(true);
+  // Handle species dropdown change
+  const handleSpeciesChange = (value: string) => {
+    if (value === '__add_new__') {
+      setNewSpeciesName('');
+      setShowAddSpeciesModal(true);
+    } else {
+      setSelectedSpecies(value);
+    }
+  };
+
+  // Handle service dropdown change
+  const handleServiceChange = (value: string) => {
+    if (value === '__add_new__') {
+      setNewServiceForm({
+        category: selectedCategory,
+        species: selectedSpecies,
+        mount_type: '',
+        description: '',
+        base_price: 0,
+      });
+      setShowAddServiceModal(true);
+    } else if (value) {
+      addServiceItem(value);
+    }
+  };
+
+  // Handle adding a new species (just sets the selected species to the new name)
+  const handleAddSpecies = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newSpeciesName.trim()) {
+      setSelectedSpecies(newSpeciesName.trim());
+      setShowAddSpeciesModal(false);
+    }
   };
 
   // Handle adding a new service
@@ -311,7 +336,7 @@ function NewEstimateContent() {
                   <label className="block text-xs text-gray-500 mb-1">2. Species</label>
                   <select
                     value={selectedSpecies}
-                    onChange={(e) => setSelectedSpecies(e.target.value)}
+                    onChange={(e) => handleSpeciesChange(e.target.value)}
                     disabled={!selectedCategory}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white disabled:bg-gray-100 disabled:text-gray-400"
                   >
@@ -321,6 +346,9 @@ function NewEstimateContent() {
                         {spec.name}
                       </option>
                     ))}
+                    {selectedCategory && (
+                      <option value="__add_new__" className="text-amber-600 font-medium">+ Add New Species</option>
+                    )}
                   </select>
                 </div>
 
@@ -330,10 +358,8 @@ function NewEstimateContent() {
                   <select
                     disabled={!selectedSpecies}
                     onChange={(e) => {
-                      if (e.target.value) {
-                        addServiceItem(e.target.value);
-                        e.target.value = '';
-                      }
+                      handleServiceChange(e.target.value);
+                      e.target.value = '';
                     }}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white disabled:bg-gray-100 disabled:text-gray-400"
                   >
@@ -343,22 +369,11 @@ function NewEstimateContent() {
                         {service.mount_type || service.description} - {formatCurrency(service.base_price)}
                       </option>
                     ))}
+                    {selectedSpecies && (
+                      <option value="__add_new__" className="text-amber-600 font-medium">+ Add New Service</option>
+                    )}
                   </select>
                 </div>
-              </div>
-
-              {/* Quick Add Service Button */}
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={openAddServiceModal}
-                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add New Service
-                </Button>
               </div>
             </div>
           </div>
@@ -469,6 +484,35 @@ function NewEstimateContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Species Modal */}
+      <Modal
+        open={showAddSpeciesModal}
+        onClose={() => setShowAddSpeciesModal(false)}
+        title="Add New Species"
+      >
+        <form onSubmit={handleAddSpecies} className="space-y-4">
+          <p className="text-sm text-gray-500">
+            Add a new species for <strong>{selectedCategory}</strong>
+          </p>
+          <Input
+            label="Species Name"
+            required
+            value={newSpeciesName}
+            onChange={(e) => setNewSpeciesName(e.target.value)}
+            placeholder="e.g., Mule Deer, Pheasant, Walleye"
+            autoFocus
+          />
+          <div className="flex gap-3 pt-4">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddSpeciesModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1">
+              Add Species
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Add Service Modal */}
       <Modal
