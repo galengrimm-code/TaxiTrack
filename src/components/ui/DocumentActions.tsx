@@ -11,9 +11,33 @@ interface DocumentActionsProps {
   getShareData?: () => { title: string; text: string; url?: string };
 }
 
+// Generate PDF from the printable document element
+async function generatePDF(filename: string): Promise<Blob> {
+  // Dynamic import to avoid SSR issues
+  const html2pdf = (await import('html2pdf.js')).default;
+
+  const element = document.querySelector('.printable-document') as HTMLElement | null;
+  if (!element) {
+    throw new Error('No printable document found');
+  }
+
+  const opt = {
+    margin: 0.5,
+    filename: filename,
+    image: { type: 'jpeg' as const, quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const }
+  };
+
+  // Generate PDF as blob
+  const blob = await html2pdf().set(opt).from(element).outputPdf('blob');
+  return blob;
+}
+
 export function DocumentActions({ title, documentId, onPrint, getShareData }: DocumentActionsProps) {
   const [sharing, setSharing] = useState(false);
   const [shared, setShared] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const handlePrint = () => {
     if (onPrint) {
@@ -24,45 +48,81 @@ export function DocumentActions({ title, documentId, onPrint, getShareData }: Do
   };
 
   const handleShare = async () => {
-    if (!navigator.share) {
-      // Fallback: copy URL to clipboard
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        setShared(true);
-        setTimeout(() => setShared(false), 2000);
-      } catch (err) {
-        console.error('Failed to copy:', err);
-      }
-      return;
-    }
-
     setSharing(true);
     try {
-      const shareData = getShareData?.() || {
-        title: title,
-        text: `${title} - ${documentId}`,
-        url: window.location.href,
-      };
-      await navigator.share(shareData);
+      const filename = `${title.replace(/\s+/g, '_')}.pdf`;
+      const pdfBlob = await generatePDF(filename);
+      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+      // Check if file sharing is supported
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          files: [pdfFile],
+          title: title,
+          text: getShareData?.().text || `${title} - ${documentId}`,
+        });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } else {
+        // Fallback: download the PDF instead
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      }
     } catch (err) {
-      // User cancelled or error
-      console.log('Share cancelled or failed:', err);
+      console.error('Share failed:', err);
+      // If user cancelled, that's ok
     } finally {
       setSharing(false);
     }
   };
 
-  const handleDownloadPDF = () => {
-    // Trigger print dialog which allows saving as PDF
-    window.print();
+  const handleDownloadPDF = async () => {
+    setDownloading(true);
+    try {
+      const filename = `${title.replace(/\s+/g, '_')}.pdf`;
+      const pdfBlob = await generatePDF(filename);
+
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF download failed:', err);
+      // Fallback to print dialog
+      window.print();
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
     <div className="flex flex-wrap gap-2">
-      {/* Print / Download PDF */}
-      <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="flex-1 sm:flex-none">
-        <Download className="w-4 h-4" />
-        <span className="hidden sm:inline">PDF</span>
+      {/* Download PDF */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleDownloadPDF}
+        disabled={downloading}
+        className="flex-1 sm:flex-none"
+      >
+        {downloading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Download className="w-4 h-4" />
+        )}
+        <span className="hidden sm:inline">{downloading ? 'Creating...' : 'PDF'}</span>
       </Button>
 
       {/* Print */}
@@ -71,7 +131,7 @@ export function DocumentActions({ title, documentId, onPrint, getShareData }: Do
         <span className="hidden sm:inline">Print</span>
       </Button>
 
-      {/* Share */}
+      {/* Share PDF */}
       <Button
         variant="outline"
         size="sm"
@@ -86,7 +146,7 @@ export function DocumentActions({ title, documentId, onPrint, getShareData }: Do
         ) : (
           <Share2 className="w-4 h-4" />
         )}
-        <span className="hidden sm:inline">{shared ? 'Copied!' : 'Share'}</span>
+        <span className="hidden sm:inline">{shared ? 'Done!' : 'Share'}</span>
       </Button>
     </div>
   );
