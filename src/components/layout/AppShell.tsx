@@ -2,10 +2,10 @@
 
 import { ReactNode, useState } from 'react';
 import { Sidebar, TopBar, MobileBottomNav } from '@/components/layout';
-import { DataProvider, useData } from '@/lib/DataContext';
+import { useData } from '@/lib/DataContext';
 import { Modal } from '@/components/ui';
 
-function AppShellContent({ children }: { children: ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const { syncing, connected } = useData();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -71,13 +71,5 @@ function AppShellContent({ children }: { children: ReactNode }) {
         </div>
       </Modal>
     </div>
-  );
-}
-
-export function AppShell({ children }: { children: ReactNode }) {
-  return (
-    <DataProvider>
-      <AppShellContent>{children}</AppShellContent>
-    </DataProvider>
   );
 }
