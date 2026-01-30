@@ -22,24 +22,40 @@ function NewEstimateContent() {
   const [customerSearch, setCustomerSearch] = useState('');
 
   // Service selector state
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSpecies, setSelectedSpecies] = useState('');
 
-  // Group services by species
-  const servicesBySpecies = useMemo(() => {
-    const groups: Record<string, Service[]> = {};
+  // Group services by category, then by species
+  const servicesByCategory = useMemo(() => {
+    const groups: Record<string, Record<string, Service[]>> = {};
     services.filter(s => s.is_active).forEach(service => {
-      const key = service.species || 'Other';
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(service);
+      const category = service.category || 'Other';
+      const species = service.species || 'General';
+      if (!groups[category]) groups[category] = {};
+      if (!groups[category][species]) groups[category][species] = [];
+      groups[category][species].push(service);
     });
-    // Sort species alphabetically
-    return Object.fromEntries(
-      Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-    );
+    return groups;
   }, [services]);
 
-  // Get unique species list
-  const speciesList = Object.keys(servicesBySpecies);
+  // Get unique categories
+  const categoryList = Object.keys(servicesByCategory).sort();
+
+  // Get species for selected category
+  const speciesForCategory = selectedCategory
+    ? Object.keys(servicesByCategory[selectedCategory] || {}).sort()
+    : [];
+
+  // Get services for selected category and species
+  const servicesForSelection = (selectedCategory && selectedSpecies)
+    ? servicesByCategory[selectedCategory]?.[selectedSpecies] || []
+    : [];
+
+  // Reset species when category changes
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedSpecies('');
+  };
 
   // Filter customers
   const filteredCustomers = customers.filter(c => {
@@ -210,47 +226,65 @@ function NewEstimateContent() {
               </Button>
             </div>
 
-            {/* Two-step service selector */}
-            <div className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 rounded-xl">
-              <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">1. Select Species</label>
-                <select
-                  value={selectedSpecies}
-                  onChange={(e) => setSelectedSpecies(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white"
-                >
-                  <option value="">Choose species...</option>
-                  {speciesList.map(species => (
-                    <option key={species} value={species}>
-                      {species} ({servicesBySpecies[species].length})
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Three-step service selector: Category → Species → Service */}
+            <div className="p-3 bg-gray-50 rounded-xl space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* Category */}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">1. Category</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white"
+                  >
+                    <option value="">Choose category...</option>
+                    {categoryList.map(category => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="hidden sm:flex items-end pb-2">
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </div>
+                {/* Species */}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">2. Species</label>
+                  <select
+                    value={selectedSpecies}
+                    onChange={(e) => setSelectedSpecies(e.target.value)}
+                    disabled={!selectedCategory}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white disabled:bg-gray-100 disabled:text-gray-400"
+                  >
+                    <option value="">{selectedCategory ? 'Choose species...' : 'Select category first'}</option>
+                    {speciesForCategory.map(species => (
+                      <option key={species} value={species}>
+                        {species}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">2. Select Service</label>
-                <select
-                  disabled={!selectedSpecies}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      addServiceItem(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white disabled:bg-gray-100 disabled:text-gray-400"
-                >
-                  <option value="">{selectedSpecies ? 'Choose service...' : 'Select species first'}</option>
-                  {selectedSpecies && servicesBySpecies[selectedSpecies]?.map(service => (
-                    <option key={service.service_id} value={service.service_id}>
-                      {service.mount_type || service.description} - {formatCurrency(service.base_price)}
-                    </option>
-                  ))}
-                </select>
+                {/* Service */}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">3. Service</label>
+                  <select
+                    disabled={!selectedSpecies}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        addServiceItem(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white disabled:bg-gray-100 disabled:text-gray-400"
+                  >
+                    <option value="">{selectedSpecies ? 'Choose service...' : 'Select species first'}</option>
+                    {servicesForSelection.map(service => (
+                      <option key={service.service_id} value={service.service_id}>
+                        {service.mount_type || service.description} - {formatCurrency(service.base_price)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>

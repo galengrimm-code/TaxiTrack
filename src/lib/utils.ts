@@ -151,17 +151,14 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  * Service categories
  */
 export const SERVICE_CATEGORIES = [
-  'Big Game - Shoulder',
-  'Big Game - Pedestal',
-  'Big Game - Life-size',
-  'Birds - Turkey',
-  'Birds - Waterfowl',
-  'Birds - Upland',
-  'Fish - Replica',
-  'Fish - Skin Mount',
-  'Habitats & Bases',
+  'Big Game',
+  'Birds',
+  'Fish',
+  'Small Game',
+  'European / Skull',
+  'Tanning',
   'Repairs',
-  'Miscellaneous',
+  'Fees / Admin',
 ] as const;
 
 /**

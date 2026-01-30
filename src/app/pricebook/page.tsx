@@ -41,11 +41,15 @@ function PriceBookContent() {
     return matchesSearch && matchesCategory;
   });
 
+  // Group by category, then by species
   const groupedByCategory = filtered.reduce((acc, service) => {
-    if (!acc[service.category]) acc[service.category] = [];
-    acc[service.category].push(service);
+    const category = service.category || 'Other';
+    const species = service.species || 'General';
+    if (!acc[category]) acc[category] = {};
+    if (!acc[category][species]) acc[category][species] = [];
+    acc[category][species].push(service);
     return acc;
-  }, {} as Record<string, typeof services>);
+  }, {} as Record<string, Record<string, typeof services>>);
 
   const openNew = () => {
     setEditingService(null);
@@ -113,27 +117,30 @@ function PriceBookContent() {
         />
       </div>
 
-      {Object.entries(groupedByCategory).map(([category, categoryServices]) => (
-        <div key={category}>
-          <h3 className="font-semibold text-gray-700 mb-3">{category}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categoryServices.map(service => (
-              <Card key={service.service_id} hover onClick={() => openEdit(service)}>
-                <CardContent className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <Tag className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{service.description}</p>
-                    {service.species && (
-                      <p className="text-sm text-gray-500">{service.species}</p>
-                    )}
-                  </div>
-                  <p className="font-semibold text-gray-900">{formatCurrency(service.base_price)}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      {Object.entries(groupedByCategory).sort(([a], [b]) => a.localeCompare(b)).map(([category, speciesGroups]) => (
+        <div key={category} className="space-y-4">
+          <h2 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-2">{category}</h2>
+          {Object.entries(speciesGroups).sort(([a], [b]) => a.localeCompare(b)).map(([species, speciesServices]) => (
+            <div key={species} className="ml-2">
+              <h3 className="font-semibold text-gray-600 mb-2 text-sm uppercase tracking-wide">{species}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {speciesServices.map(service => (
+                  <Card key={service.service_id} hover onClick={() => openEdit(service)}>
+                    <CardContent className="flex items-center gap-3 py-3">
+                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Tag className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{service.mount_type || service.description}</p>
+                        <p className="text-xs text-gray-500 truncate">{service.description}</p>
+                      </div>
+                      <p className="font-semibold text-gray-900 flex-shrink-0">{formatCurrency(service.base_price)}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ))}
 
