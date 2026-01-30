@@ -53,6 +53,23 @@ export function generateId(prefix: string): string {
 }
 
 /**
+ * Generate a project ID in format YY.XX (e.g., 26.01, 26.02)
+ */
+export function generateProjectId(existingProjects: { project_id: string }[]): string {
+  const year = new Date().getFullYear().toString().slice(-2);
+  const yearProjects = existingProjects.filter(p =>
+    p.project_id && p.project_id.startsWith(year + '.')
+  );
+  const maxNum = yearProjects.reduce((max, p) => {
+    const parts = p.project_id.split('.');
+    const num = parseInt(parts[1]) || 0;
+    return num > max ? num : max;
+  }, 0);
+  const nextNum = (maxNum + 1).toString().padStart(2, '0');
+  return `${year}.${nextNum}`;
+}
+
+/**
  * Calculate days since a date
  */
 export function daysSince(dateString: string): number {

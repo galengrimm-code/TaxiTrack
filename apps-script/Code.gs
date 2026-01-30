@@ -98,6 +98,19 @@ function setupDatabase() {
 function getSheet(n) { return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(n); }
 function genId(p) { return p + '-' + Date.now().toString().slice(-6) + Math.random().toString(36).slice(-2); }
 
+// Generate project ID in format YY.XX (e.g., 26.01, 26.02)
+function genProjectId() {
+  const year = new Date().getFullYear().toString().slice(-2);
+  const projects = toObjects(getSheet('Projects'));
+  const yearProjects = projects.filter(p => p.project_id && p.project_id.startsWith(year + '.'));
+  const maxNum = yearProjects.reduce((max, p) => {
+    const num = parseInt(p.project_id.split('.')[1]) || 0;
+    return num > max ? num : max;
+  }, 0);
+  const nextNum = (maxNum + 1).toString().padStart(2, '0');
+  return year + '.' + nextNum;
+}
+
 function toObjects(sheet) {
   if (!sheet) return [];
   const d = sheet.getDataRange().getValues();
@@ -215,7 +228,8 @@ function convertEstimateToInvoice(estId) {
   const projs = [];
   lis.forEach((l,i) => {
     addRow('InvoiceLineItems', { invoice_id: invId, service_id: l.service_id, description: l.description, species: l.species, mount_type: l.mount_type, quantity: l.quantity, unit_price: l.unit_price, line_total: l.line_total, sort_order: i + 1 }, 'ILI');
-    const p = { project_id: invId.replace('INV','PRJ') + String.fromCharCode(97+i), invoice_id: invId, customer_id: est.customer_id, species: l.species, mount_type: l.mount_type, description: l.description, status: 'Received', status_updated_at: new Date(), notes: '', is_archived: false };
+    const projId = genProjectId();
+    const p = { project_id: projId, invoice_id: invId, customer_id: est.customer_id, species: l.species, mount_type: l.mount_type, description: l.description, status: 'Received', status_updated_at: new Date(), notes: '', is_archived: false };
     addRow('Projects', p, 'PRJ');
     projs.push(p);
   });

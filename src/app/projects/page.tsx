@@ -114,9 +114,11 @@ function ProjectsContent() {
                   <Briefcase className="w-6 h-6 text-gray-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900">{project.description}</p>
+                  <p className="font-semibold text-gray-900">
+                    {customer?.first_name} {customer?.last_name}
+                  </p>
                   <p className="text-sm text-gray-500">
-                    {customer?.first_name} {customer?.last_name} • {project.project_id}
+                    {project.description} • {project.project_id}
                   </p>
                 </div>
                 <Select

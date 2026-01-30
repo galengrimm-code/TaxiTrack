@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import * as api from '@/lib/api';
-import { generateId } from '@/lib/utils';
+import { generateId, generateProjectId } from '@/lib/utils';
 import type {
   Customer,
   Service,
@@ -300,18 +300,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
       is_archived: false,
     };
     
-    const newProjects: Project[] = estLineItems.map((li, idx) => ({
-      project_id: `${invoiceId.replace('INV', 'PRJ')}${String.fromCharCode(97 + idx)}`,
-      invoice_id: invoiceId,
-      customer_id: estimate.customer_id,
-      species: li.species,
-      mount_type: li.mount_type,
-      description: li.description,
-      status: 'Received',
-      status_updated_at: new Date().toISOString(),
-      notes: '',
-      is_archived: false,
-    }));
+    // Generate projects with sequential IDs
+    const newProjects: Project[] = [];
+    const tempProjects = [...projects];
+    for (const li of estLineItems) {
+      const projId = generateProjectId(tempProjects);
+      const proj: Project = {
+        project_id: projId,
+        invoice_id: invoiceId,
+        customer_id: estimate.customer_id,
+        species: li.species,
+        mount_type: li.mount_type,
+        description: li.description,
+        status: 'Received',
+        status_updated_at: new Date().toISOString(),
+        notes: '',
+        is_archived: false,
+      };
+      newProjects.push(proj);
+      tempProjects.push(proj);
+    }
     
     setEstimates(prev => prev.map(e => 
       e.estimate_id === estimateId 
