@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import * as api from '@/lib/api';
 import { generateId, generateProjectId } from '@/lib/utils';
 import type {
@@ -18,6 +18,31 @@ import type {
   EstimateFormData,
   PaymentFormData,
 } from '@/lib/types';
+
+// Local cache key
+const CACHE_KEY = 'taxitrack_data_cache';
+
+// Load cached data from localStorage
+function loadCache() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) return JSON.parse(cached);
+  } catch (e) {
+    console.warn('Failed to load cache:', e);
+  }
+  return null;
+}
+
+// Save data to localStorage cache
+function saveCache(data: Record<string, unknown>) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn('Failed to save cache:', e);
+  }
+}
 
 interface DataContextType {
   // Data
@@ -74,27 +99,30 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | null>(null);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  // Data state
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [estimates, setEstimates] = useState<Estimate[]>([]);
-  const [estimateLineItems, setEstimateLineItems] = useState<EstimateLineItem[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [invoiceLineItems, setInvoiceLineItems] = useState<InvoiceLineItem[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [settings, setSettings] = useState<Settings | null>(null);
-  
-  // Status state
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [connected, setConnected] = useState(false);
+  // Data state - initialize from cache for instant render
+  const cache = useRef(loadCache());
+  const [customers, setCustomers] = useState<Customer[]>(cache.current?.customers || []);
+  const [services, setServices] = useState<Service[]>(cache.current?.services || []);
+  const [estimates, setEstimates] = useState<Estimate[]>(cache.current?.estimates || []);
+  const [estimateLineItems, setEstimateLineItems] = useState<EstimateLineItem[]>(cache.current?.estimateLineItems || []);
+  const [invoices, setInvoices] = useState<Invoice[]>(cache.current?.invoices || []);
+  const [invoiceLineItems, setInvoiceLineItems] = useState<InvoiceLineItem[]>(cache.current?.invoiceLineItems || []);
+  const [payments, setPayments] = useState<Payment[]>(cache.current?.payments || []);
+  const [projects, setProjects] = useState<Project[]>(cache.current?.projects || []);
+  const [settings, setSettings] = useState<Settings | null>(cache.current?.settings || null);
 
-  // Load data on mount
-  const refreshData = useCallback(async () => {
-    setLoading(true);
+  // Status state - loading is false if we have cached data
+  const [loading, setLoading] = useState(!cache.current);
+  const [syncing, setSyncing] = useState(false);
+  const [connected, setConnected] = useState(!!cache.current);
+
+  // Load data from API and update cache
+  const refreshData = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true);
+    setSyncing(true);
+
     const data = await api.getAllData();
-    
+
     if (data) {
       setCustomers(data.customers || []);
       setServices(data.services || []);
@@ -106,14 +134,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setProjects(data.projects || []);
       setSettings(data.settings || null);
       setConnected(true);
+
+      // Save to cache for next page load
+      saveCache({
+        customers: data.customers || [],
+        services: data.services || [],
+        estimates: data.estimates || [],
+        estimateLineItems: data.estimateLineItems || [],
+        invoices: data.invoices || [],
+        invoiceLineItems: data.invoiceLineItems || [],
+        payments: data.payments || [],
+        projects: data.projects || [],
+        settings: data.settings || null,
+      });
     }
-    
+
     setLoading(false);
+    setSyncing(false);
   }, []);
 
   useEffect(() => {
+    // Fetch fresh data on mount (background sync if we have cache)
     refreshData();
   }, [refreshData]);
+
+  // Keep cache in sync with local state changes
+  useEffect(() => {
+    if (!loading && connected) {
+      saveCache({
+        customers,
+        services,
+        estimates,
+        estimateLineItems,
+        invoices,
+        invoiceLineItems,
+        payments,
+        projects,
+        settings,
+      });
+    }
+  }, [customers, services, estimates, estimateLineItems, invoices, invoiceLineItems, payments, projects, settings, loading, connected]);
 
   // Customer actions
   const addCustomer = async (data: CustomerFormData): Promise<Customer> => {
