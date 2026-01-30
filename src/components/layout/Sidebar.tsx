@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -28,42 +29,6 @@ const bottomNavItems = [
   { href: '/pricebook', label: 'Price Book', icon: Book },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
-
-// Deer head logo component
-function DeerLogo({ className = "w-10 h-10" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="antlerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#fbbf24"/>
-          <stop offset="100%" stopColor="#f97316"/>
-        </linearGradient>
-      </defs>
-      {/* Left Antler */}
-      <path d="M25 45 Q20 35 15 20 Q12 15 8 12 M15 20 Q18 18 22 15 M15 20 Q13 22 10 25 M25 45 Q22 38 18 30 Q16 28 12 28"
-            fill="none" stroke="url(#antlerGrad)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-      {/* Right Antler */}
-      <path d="M75 45 Q80 35 85 20 Q88 15 92 12 M85 20 Q82 18 78 15 M85 20 Q87 22 90 25 M75 45 Q78 38 82 30 Q84 28 88 28"
-            fill="none" stroke="url(#antlerGrad)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-      {/* Head */}
-      <ellipse cx="50" cy="58" rx="22" ry="28" fill="#f8fafc"/>
-      {/* Ears */}
-      <ellipse cx="30" cy="48" rx="6" ry="10" fill="#f8fafc" transform="rotate(-20 30 48)"/>
-      <ellipse cx="70" cy="48" rx="6" ry="10" fill="#f8fafc" transform="rotate(20 70 48)"/>
-      {/* Inner ears */}
-      <ellipse cx="30" cy="48" rx="3" ry="6" fill="#fcd34d" transform="rotate(-20 30 48)"/>
-      <ellipse cx="70" cy="48" rx="3" ry="6" fill="#fcd34d" transform="rotate(20 70 48)"/>
-      {/* Eyes */}
-      <ellipse cx="40" cy="58" rx="4" ry="5" fill="#1e293b"/>
-      <ellipse cx="60" cy="58" rx="4" ry="5" fill="#1e293b"/>
-      <circle cx="41" cy="57" r="1.5" fill="white" opacity="0.8"/>
-      <circle cx="61" cy="57" r="1.5" fill="white" opacity="0.8"/>
-      {/* Nose */}
-      <ellipse cx="50" cy="75" rx="8" ry="6" fill="#1e293b"/>
-      <ellipse cx="50" cy="74" rx="5" ry="3" fill="#374151"/>
-    </svg>
-  );
-}
 
 interface SidebarProps {
   syncing?: boolean;
@@ -99,8 +64,14 @@ export function Sidebar({ syncing = false, connected = false, isOpen = true, onC
         <div className="p-4 border-b border-slate-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
-                <DeerLogo className="w-9 h-9" />
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg overflow-hidden bg-white">
+                <Image
+                  src="/logo.png"
+                  alt="TaxiTrack Logo"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                />
               </div>
               <div>
                 <h1 className="font-bold text-lg">TaxiTrack</h1>

@@ -12,7 +12,7 @@ import type { LineItemFormData, Service, ServiceFormData } from '@/lib/types';
 
 function NewEstimateContent() {
   const router = useRouter();
-  const { customers, services, categories, species: speciesLookup, mountTypes, addEstimate, addService, loading } = useData();
+  const { customers, services, categories, species: speciesLookup, mountTypes, addEstimate, addService, addSpecies, loading } = useData();
   const [saving, setSaving] = useState(false);
 
   // Form state
@@ -38,11 +38,9 @@ function NewEstimateContent() {
     base_price: 0,
   });
 
-  // Local custom species (for species added during this session)
-  const [customSpecies, setCustomSpecies] = useState<string[]>([]);
-
   // Feedback for added items
   const [justAddedService, setJustAddedService] = useState<string | null>(null);
+  const [addingSpecies, setAddingSpecies] = useState(false);
 
   // Get categories sorted by sort_order
   const categoryList = useMemo(() => {
@@ -54,32 +52,20 @@ function NewEstimateContent() {
     return cats.map(c => ({ category_id: c, name: c, icon: '', sort_order: 0 }));
   }, [categories, services]);
 
-  // Get species for selected category (including custom species added this session)
+  // Get species for selected category
   const speciesForCategory = useMemo(() => {
     if (!selectedCategory) return [];
 
-    let speciesList: { species_id: string; category: string; name: string; sort_order: number }[] = [];
-
     if (speciesLookup.length > 0) {
-      speciesList = speciesLookup
+      return speciesLookup
         .filter(s => s.category === selectedCategory)
         .sort((a, b) => a.sort_order - b.sort_order);
-    } else {
-      // Fallback: derive from services
-      const specs = [...new Set(services.filter(s => s.is_active && s.category === selectedCategory).map(s => s.species))];
-      speciesList = specs.map(s => ({ species_id: s, category: selectedCategory, name: s || 'General', sort_order: 0 }));
     }
 
-    // Add custom species from this session
-    const existingNames = new Set(speciesList.map(s => s.name.toLowerCase()));
-    customSpecies.forEach(cs => {
-      if (!existingNames.has(cs.toLowerCase())) {
-        speciesList.push({ species_id: `custom-${cs}`, category: selectedCategory, name: cs, sort_order: 999 });
-      }
-    });
-
-    return speciesList;
-  }, [selectedCategory, speciesLookup, services, customSpecies]);
+    // Fallback: derive from services
+    const specs = [...new Set(services.filter(s => s.is_active && s.category === selectedCategory).map(s => s.species))];
+    return specs.map(s => ({ species_id: s, category: selectedCategory, name: s || 'General', sort_order: 0 }));
+  }, [selectedCategory, speciesLookup, services]);
 
   // Get services for selected category and species
   const servicesForSelection = useMemo(() => {
@@ -124,15 +110,21 @@ function NewEstimateContent() {
   };
 
   // Handle adding a new species
-  const handleAddSpecies = (e: React.FormEvent) => {
+  const handleAddSpecies = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (addingSpecies) return;
+
     const name = newSpeciesName.trim();
-    if (name) {
-      // Add to custom species list so it appears in dropdown
-      setCustomSpecies(prev => [...prev, name]);
-      // Select the new species
-      setSelectedSpecies(name);
-      setShowAddSpeciesModal(false);
+    if (name && selectedCategory) {
+      setAddingSpecies(true);
+      try {
+        const newSpec = await addSpecies(selectedCategory, name);
+        // Select the new species
+        setSelectedSpecies(newSpec.name);
+        setShowAddSpeciesModal(false);
+      } finally {
+        setAddingSpecies(false);
+      }
     }
   };
 
@@ -283,15 +275,23 @@ function NewEstimateContent() {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search customers by name or phone..."
-                  value={customerSearch}
-                  onChange={(e) => setCustomerSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search customers..."
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  />
+                </div>
+                <Link href="/customers?new=true">
+                  <Button variant="outline" className="h-full px-4">
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline ml-1">New</span>
+                  </Button>
+                </Link>
               </div>
 
               <div className="max-h-48 overflow-y-auto space-y-2">
@@ -314,13 +314,6 @@ function NewEstimateContent() {
                   <p className="text-center py-4 text-gray-500">No customers found</p>
                 )}
               </div>
-
-              <Link href="/customers?new=true" className="block">
-                <Button variant="outline" className="w-full">
-                  <Plus className="w-4 h-4" />
-                  Add New Customer
-                </Button>
-              </Link>
             </div>
           )}
         </CardContent>
@@ -541,11 +534,11 @@ function NewEstimateContent() {
             autoFocus
           />
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddSpeciesModal(false)}>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddSpeciesModal(false)} disabled={addingSpecies}>
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Add Species
+            <Button type="submit" className="flex-1" disabled={addingSpecies}>
+              {addingSpecies ? 'Adding...' : 'Add Species'}
             </Button>
           </div>
         </form>

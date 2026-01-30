@@ -103,53 +103,57 @@ export function PrintableDocument({ children, className = '' }: { children: Reac
           .print\\:hidden,
           nav,
           aside,
-          header,
           .no-print,
-          [class*="fixed"],
-          [class*="lg\\:hidden"],
           button,
           input,
           .safe-area-bottom {
             display: none !important;
           }
 
-          /* Hide everything except printable document */
-          body > * {
-            display: none !important;
+          /* Make html and body transparent to allow absolute positioning */
+          html, body {
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
 
-          body {
-            display: block !important;
+          /* Hide everything by default using visibility */
+          body * {
+            visibility: hidden;
           }
 
-          /* Show printable document */
+          /* Show printable document and all its children */
           .printable-document,
           .printable-document * {
-            display: block !important;
             visibility: visible !important;
           }
 
           .printable-document {
-            position: fixed !important;
+            position: absolute !important;
             top: 0 !important;
             left: 0 !important;
-            right: 0 !important;
             width: 100% !important;
-            height: auto !important;
             background: white !important;
-            padding: 0.25in !important;
+            padding: 0 !important;
             margin: 0 !important;
-            z-index: 99999 !important;
           }
 
           /* Fix table display */
-          .printable-document table,
-          .printable-document thead,
-          .printable-document tbody,
-          .printable-document tr,
+          .printable-document table {
+            display: table !important;
+          }
+          .printable-document thead {
+            display: table-header-group !important;
+          }
+          .printable-document tbody {
+            display: table-row-group !important;
+          }
+          .printable-document tr {
+            display: table-row !important;
+          }
           .printable-document th,
           .printable-document td {
-            display: revert !important;
+            display: table-cell !important;
           }
 
           .printable-document .flex {
@@ -166,6 +170,10 @@ export function PrintableDocument({ children, className = '' }: { children: Reac
 
           .printable-document .sm\\:table-cell {
             display: table-cell !important;
+          }
+
+          .printable-document .sm\\:hidden {
+            display: none !important;
           }
 
           /* Reset page margins */

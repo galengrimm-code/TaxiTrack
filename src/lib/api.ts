@@ -127,6 +127,14 @@ export async function updateService(data: Service): Promise<Service | null> {
 }
 
 // ============================================================================
+// SPECIES
+// ============================================================================
+
+export async function addSpecies(data: { category: string; name: string }): Promise<{ species_id: string; category: string; name: string; sort_order: number } | null> {
+  return apiCall<{ species_id: string; category: string; name: string; sort_order: number }>('addSpecies', { data });
+}
+
+// ============================================================================
 // ESTIMATES
 // ============================================================================
 

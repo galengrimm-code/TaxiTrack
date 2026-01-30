@@ -78,6 +78,9 @@ interface DataContextType {
   
   // Service actions
   addService: (data: ServiceFormData) => Promise<Service>;
+
+  // Species actions
+  addSpecies: (category: string, name: string) => Promise<Species>;
   updateService: (data: Service) => Promise<void>;
   
   // Estimate actions
@@ -252,12 +255,42 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateService = async (data: Service): Promise<void> => {
-    setServices(prev => prev.map(s => 
+    setServices(prev => prev.map(s =>
       s.service_id === data.service_id ? data : s
     ));
     setSyncing(true);
     await api.updateService(data);
     setSyncing(false);
+  };
+
+  // Species actions
+  const addSpeciesAction = async (category: string, name: string): Promise<Species> => {
+    // Check if already exists locally
+    const existing = species.find(s => s.category === category && s.name.toLowerCase() === name.toLowerCase());
+    if (existing) return existing;
+
+    // Create optimistic entry
+    const newSpecies: Species = {
+      species_id: generateId('SP'),
+      category,
+      name,
+      sort_order: 999,
+    };
+
+    setSpecies(prev => [...prev, newSpecies]);
+    setSyncing(true);
+
+    const result = await api.addSpecies({ category, name });
+    if (result) {
+      setSpecies(prev => prev.map(s =>
+        s.species_id === newSpecies.species_id ? result : s
+      ));
+      setSyncing(false);
+      return result;
+    }
+
+    setSyncing(false);
+    return newSpecies;
   };
 
   // Estimate actions
@@ -518,6 +551,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     updateCustomer,
     addService,
     updateService,
+    addSpecies: addSpeciesAction,
     addEstimate,
     updateEstimate,
     updateEstimateStatus,

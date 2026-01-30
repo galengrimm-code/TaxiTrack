@@ -45,6 +45,7 @@ function handleRequest(e) {
       case 'updateCustomer': result = updateRow('Customers', 'customer_id', postData.data); break;
       case 'addService': result = addRow('Services', postData.data, 'SVC'); break;
       case 'updateService': result = updateRow('Services', 'service_id', postData.data); break;
+      case 'addSpecies': result = addSpecies(postData.data); break;
       case 'addEstimate': result = addEstimate(postData.data); break;
       case 'updateEstimate': result = updateEstimate(postData.data); break;
       case 'updateEstimateStatus': result = updateEstimateStatus(postData.estimate_id, postData.status); break;
@@ -212,6 +213,24 @@ function updateRow(sheetName, idCol, data) {
   if (row === -1) throw new Error('Not found');
   sheet.getRange(row, 1, 1, headers.length).setValues([headers.map(h => data[h] !== undefined ? data[h] : '')]);
   return data;
+}
+
+function addSpecies(data) {
+  const sheet = getSheet('Species');
+  const existing = toObjects(sheet);
+  // Check if species already exists for this category
+  const exists = existing.find(s => s.category === data.category && s.name.toLowerCase() === data.name.toLowerCase());
+  if (exists) return exists;
+  // Get next sort order
+  const maxSort = existing.filter(s => s.category === data.category).reduce((max, s) => Math.max(max, s.sort_order || 0), 0);
+  const newSpecies = {
+    species_id: genId('SP'),
+    category: data.category,
+    name: data.name,
+    sort_order: maxSort + 1
+  };
+  sheet.appendRow([newSpecies.species_id, newSpecies.category, newSpecies.name, newSpecies.sort_order]);
+  return newSpecies;
 }
 
 function getSettings() {
