@@ -12,7 +12,7 @@ import type { LineItemFormData, Service } from '@/lib/types';
 
 function NewEstimateContent() {
   const router = useRouter();
-  const { customers, services, addEstimate, loading } = useData();
+  const { customers, services, categories, species: speciesLookup, mountTypes, addEstimate, loading } = useData();
   const [saving, setSaving] = useState(false);
 
   // Form state
@@ -25,31 +25,38 @@ function NewEstimateContent() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSpecies, setSelectedSpecies] = useState('');
 
-  // Group services by category, then by species
-  const servicesByCategory = useMemo(() => {
-    const groups: Record<string, Record<string, Service[]>> = {};
-    services.filter(s => s.is_active).forEach(service => {
-      const category = service.category || 'Other';
-      const species = service.species || 'General';
-      if (!groups[category]) groups[category] = {};
-      if (!groups[category][species]) groups[category][species] = [];
-      groups[category][species].push(service);
-    });
-    return groups;
-  }, [services]);
-
-  // Get unique categories
-  const categoryList = Object.keys(servicesByCategory).sort();
+  // Get categories sorted by sort_order
+  const categoryList = useMemo(() => {
+    if (categories.length > 0) {
+      return [...categories].sort((a, b) => a.sort_order - b.sort_order);
+    }
+    // Fallback: derive from services if no lookup tables
+    const cats = [...new Set(services.filter(s => s.is_active).map(s => s.category))];
+    return cats.map(c => ({ category_id: c, name: c, icon: '', sort_order: 0 }));
+  }, [categories, services]);
 
   // Get species for selected category
-  const speciesForCategory = selectedCategory
-    ? Object.keys(servicesByCategory[selectedCategory] || {}).sort()
-    : [];
+  const speciesForCategory = useMemo(() => {
+    if (!selectedCategory) return [];
+    if (speciesLookup.length > 0) {
+      return speciesLookup
+        .filter(s => s.category === selectedCategory)
+        .sort((a, b) => a.sort_order - b.sort_order);
+    }
+    // Fallback: derive from services
+    const specs = [...new Set(services.filter(s => s.is_active && s.category === selectedCategory).map(s => s.species))];
+    return specs.map(s => ({ species_id: s, category: selectedCategory, name: s || 'General', sort_order: 0 }));
+  }, [selectedCategory, speciesLookup, services]);
 
   // Get services for selected category and species
-  const servicesForSelection = (selectedCategory && selectedSpecies)
-    ? servicesByCategory[selectedCategory]?.[selectedSpecies] || []
-    : [];
+  const servicesForSelection = useMemo(() => {
+    if (!selectedCategory || !selectedSpecies) return [];
+    return services.filter(s =>
+      s.is_active &&
+      s.category === selectedCategory &&
+      s.species === selectedSpecies
+    );
+  }, [selectedCategory, selectedSpecies, services]);
 
   // Reset species when category changes
   const handleCategoryChange = (category: string) => {
@@ -238,9 +245,9 @@ function NewEstimateContent() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white"
                   >
                     <option value="">Choose category...</option>
-                    {categoryList.map(category => (
-                      <option key={category} value={category}>
-                        {category}
+                    {categoryList.map(cat => (
+                      <option key={cat.category_id || cat.name} value={cat.name}>
+                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
                       </option>
                     ))}
                   </select>
@@ -256,9 +263,9 @@ function NewEstimateContent() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white disabled:bg-gray-100 disabled:text-gray-400"
                   >
                     <option value="">{selectedCategory ? 'Choose species...' : 'Select category first'}</option>
-                    {speciesForCategory.map(species => (
-                      <option key={species} value={species}>
-                        {species}
+                    {speciesForCategory.map(spec => (
+                      <option key={spec.species_id || spec.name} value={spec.name}>
+                        {spec.name}
                       </option>
                     ))}
                   </select>

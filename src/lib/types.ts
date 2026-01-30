@@ -129,6 +129,29 @@ export interface Settings {
   [key: string]: string;
 }
 
+// Lookup tables
+export interface Category {
+  category_id: string;
+  name: string;
+  icon: string;
+  sort_order: number;
+}
+
+export interface Species {
+  species_id: string;
+  category: string;
+  name: string;
+  sort_order: number;
+}
+
+export interface MountType {
+  mount_type_id: string;
+  category: string;
+  species: string; // empty string means applies to all species in category
+  name: string;
+  sort_order: number;
+}
+
 // ============================================================================
 // API TYPES
 // ============================================================================
@@ -149,6 +172,9 @@ export interface AllData {
   payments: Payment[];
   projects: Project[];
   settings: Settings;
+  categories: Category[];
+  species: Species[];
+  mountTypes: MountType[];
 }
 
 export interface ConnectionStatus {

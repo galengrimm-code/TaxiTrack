@@ -20,7 +20,10 @@ const SHEETS = {
   InvoiceLineItems: ['line_item_id','invoice_id','service_id','description','species','mount_type','quantity','unit_price','line_total','sort_order'],
   Payments: ['payment_id','invoice_id','date','amount','method','notes','created_at'],
   Projects: ['project_id','invoice_id','customer_id','species','mount_type','description','status','status_updated_at','notes','is_archived'],
-  Settings: ['key','value']
+  Settings: ['key','value'],
+  Categories: ['category_id','name','icon','sort_order'],
+  Species: ['species_id','category','name','sort_order'],
+  MountTypes: ['mount_type_id','category','species','name','sort_order']
 };
 
 function doGet(e) { return handleRequest(e); }
@@ -77,18 +80,74 @@ function setupDatabase() {
   const s1 = ss.getSheetByName('Sheet1');
   if (s1 && ss.getSheets().length > 1) ss.deleteSheet(s1);
 
-  const svc = ss.getSheetByName('Services');
-  if (svc.getLastRow() === 1) {
-    svc.getRange(2,1,6,8).setValues([
-      ['SVC-001','Big Game - Shoulder','Whitetail','Shoulder','Whitetail Deer - Shoulder Mount',650,true,new Date()],
-      ['SVC-002','Big Game - Shoulder','Elk','Shoulder','Elk - Shoulder Mount',1100,true,new Date()],
-      ['SVC-003','Birds - Turkey','Turkey','Strutter','Turkey - Full Strut',550,true,new Date()],
-      ['SVC-004','Birds - Waterfowl','Mallard','Standing','Mallard Drake - Standing',325,true,new Date()],
-      ['SVC-005','Miscellaneous','','Skull','European Skull Mount',150,true,new Date()],
-      ['SVC-006','Repairs','','Repair','Minor Repair',75,true,new Date()]
+  // Setup Categories lookup
+  const cats = ss.getSheetByName('Categories');
+  if (cats.getLastRow() === 1) {
+    cats.getRange(2,1,8,4).setValues([
+      ['CAT-01','Big Game','🦌',1],
+      ['CAT-02','Birds','🦃',2],
+      ['CAT-03','Fish','🐟',3],
+      ['CAT-04','Small Game','🦝',4],
+      ['CAT-05','European / Skull','💀',5],
+      ['CAT-06','Tanning','🧪',6],
+      ['CAT-07','Repairs','🔧',7],
+      ['CAT-08','Fees / Admin','💵',8]
     ]);
   }
 
+  // Setup Species lookup
+  const spec = ss.getSheetByName('Species');
+  if (spec.getLastRow() === 1) {
+    spec.getRange(2,1,30,4).setValues([
+      ['SP-01','Big Game','Whitetail',1],['SP-02','Big Game','Mule Deer',2],['SP-03','Big Game','Elk',3],
+      ['SP-04','Big Game','Antelope',4],['SP-05','Big Game','Bear',5],['SP-06','Big Game','Moose',6],
+      ['SP-07','Birds','Turkey',1],['SP-08','Birds','Pheasant',2],['SP-09','Birds','Duck',3],
+      ['SP-10','Birds','Goose',4],['SP-11','Birds','Grouse',5],['SP-12','Birds','Quail',6],
+      ['SP-13','Fish','Bass',1],['SP-14','Fish','Walleye',2],['SP-15','Fish','Crappie',3],
+      ['SP-16','Fish','Pike',4],['SP-17','Fish','Trout',5],['SP-18','Fish','Catfish',6],
+      ['SP-19','Small Game','Squirrel',1],['SP-20','Small Game','Raccoon',2],['SP-21','Small Game','Fox',3],
+      ['SP-22','Small Game','Coyote',4],['SP-23','Small Game','Bobcat',5],
+      ['SP-24','European / Skull','Whitetail',1],['SP-25','European / Skull','Elk',2],['SP-26','European / Skull','Bear',3],
+      ['SP-27','Tanning','Deer',1],['SP-28','Tanning','Elk',2],['SP-29','Tanning','Bear',3],['SP-30','Tanning','Small Game',4]
+    ]);
+  }
+
+  // Setup MountTypes lookup
+  const mts = ss.getSheetByName('MountTypes');
+  if (mts.getLastRow() === 1) {
+    mts.getRange(2,1,35,5).setValues([
+      ['MT-01','Big Game','','Shoulder',1],['MT-02','Big Game','','Pedestal',2],['MT-03','Big Game','','Life Size',3],
+      ['MT-04','Big Game','','Rug',4],['MT-05','Big Game','','Hide Tanning',5],
+      ['MT-06','Birds','','Standing',1],['MT-07','Birds','','Flying',2],['MT-08','Birds','','Swimming',3],
+      ['MT-09','Birds','Turkey','Strutter',4],['MT-10','Birds','','Wall Mount',5],
+      ['MT-11','Fish','','Skin Mount',1],['MT-12','Fish','','Replica',2],['MT-13','Fish','','Wall Mount',3],
+      ['MT-14','Fish','','Pedestal',4],['MT-15','Fish','','Open Mouth',5],
+      ['MT-16','Small Game','','Standing',1],['MT-17','Small Game','','Walking',2],['MT-18','Small Game','','Life Size',3],['MT-19','Small Game','','Rug',4],
+      ['MT-20','European / Skull','','European Skull',1],['MT-21','European / Skull','','Boiled & Cleaned',2],['MT-22','European / Skull','','Plaque Mount',3],
+      ['MT-23','Tanning','','Cape Tanning',1],['MT-24','Tanning','','Hide Tanning',2],['MT-25','Tanning','','Hair-On',3],['MT-26','Tanning','','Hair-Off',4],
+      ['MT-27','Repairs','','Minor Repair',1],['MT-28','Repairs','','Major Repair',2],['MT-29','Repairs','','Antler Repair',3],['MT-30','Repairs','','Ear Repair',4],['MT-31','Repairs','','Cleaning',5],
+      ['MT-32','Fees / Admin','','Rush Fee',1],['MT-33','Fees / Admin','','Storage Fee',2],['MT-34','Fees / Admin','','Late Pickup Fee',3],['MT-35','Fees / Admin','','Shipping',4]
+    ]);
+  }
+
+  // Setup starter Services
+  const svc = ss.getSheetByName('Services');
+  if (svc.getLastRow() === 1) {
+    svc.getRange(2,1,10,8).setValues([
+      ['SVC-001','Big Game','Whitetail','Shoulder','Whitetail Shoulder Mount',650,true,new Date()],
+      ['SVC-002','Big Game','Elk','Shoulder','Elk Shoulder Mount',1100,true,new Date()],
+      ['SVC-003','Big Game','Whitetail','Pedestal','Whitetail Pedestal Mount',850,true,new Date()],
+      ['SVC-004','Birds','Turkey','Strutter','Turkey Full Strut',550,true,new Date()],
+      ['SVC-005','Birds','Duck','Standing','Duck Standing Mount',325,true,new Date()],
+      ['SVC-006','Fish','Bass','Replica','Bass Replica Mount',18,true,new Date()],
+      ['SVC-007','European / Skull','Whitetail','European Skull','Whitetail European Skull',150,true,new Date()],
+      ['SVC-008','Tanning','Deer','Cape Tanning','Deer Cape Tanning',85,true,new Date()],
+      ['SVC-009','Repairs','Any','Minor Repair','Minor Repair',75,true,new Date()],
+      ['SVC-010','Fees / Admin','N/A','Rush Fee','Rush Fee (25%)',0,true,new Date()]
+    ]);
+  }
+
+  // Setup Settings
   const settings = ss.getSheetByName('Settings');
   if (settings.getLastRow() === 1) {
     settings.getRange(2,1,6,2).setValues([
@@ -192,7 +251,10 @@ function getAllData() {
     invoiceLineItems: toObjects(getSheet('InvoiceLineItems')),
     payments: toObjects(getSheet('Payments')),
     projects: toObjects(getSheet('Projects')).filter(p => !p.is_archived),
-    settings: getSettings()
+    settings: getSettings(),
+    categories: toObjects(getSheet('Categories')),
+    species: toObjects(getSheet('Species')),
+    mountTypes: toObjects(getSheet('MountTypes'))
   };
 }
 

@@ -13,6 +13,9 @@ import type {
   Payment,
   Project,
   Settings,
+  Category,
+  Species,
+  MountType,
   CustomerFormData,
   ServiceFormData,
   EstimateFormData,
@@ -55,7 +58,12 @@ interface DataContextType {
   payments: Payment[];
   projects: Project[];
   settings: Settings | null;
-  
+
+  // Lookup tables
+  categories: Category[];
+  species: Species[];
+  mountTypes: MountType[];
+
   // Status
   loading: boolean;
   syncing: boolean;
@@ -111,6 +119,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>(cache.current?.projects || []);
   const [settings, setSettings] = useState<Settings | null>(cache.current?.settings || null);
 
+  // Lookup tables
+  const [categories, setCategories] = useState<Category[]>(cache.current?.categories || []);
+  const [species, setSpecies] = useState<Species[]>(cache.current?.species || []);
+  const [mountTypes, setMountTypes] = useState<MountType[]>(cache.current?.mountTypes || []);
+
   // Status state - loading is false if we have cached data
   const [loading, setLoading] = useState(!cache.current);
   const [syncing, setSyncing] = useState(false);
@@ -133,6 +146,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setPayments(data.payments || []);
       setProjects(data.projects || []);
       setSettings(data.settings || null);
+      setCategories(data.categories || []);
+      setSpecies(data.species || []);
+      setMountTypes(data.mountTypes || []);
       setConnected(true);
 
       // Save to cache for next page load
@@ -146,6 +162,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         payments: data.payments || [],
         projects: data.projects || [],
         settings: data.settings || null,
+        categories: data.categories || [],
+        species: data.species || [],
+        mountTypes: data.mountTypes || [],
       });
     }
 
@@ -171,9 +190,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         payments,
         projects,
         settings,
+        categories,
+        species,
+        mountTypes,
       });
     }
-  }, [customers, services, estimates, estimateLineItems, invoices, invoiceLineItems, payments, projects, settings, loading, connected]);
+  }, [customers, services, estimates, estimateLineItems, invoices, invoiceLineItems, payments, projects, settings, categories, species, mountTypes, loading, connected]);
 
   // Customer actions
   const addCustomer = async (data: CustomerFormData): Promise<Customer> => {
@@ -485,6 +507,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     payments,
     projects,
     settings,
+    categories,
+    species,
+    mountTypes,
     loading,
     syncing,
     connected,
