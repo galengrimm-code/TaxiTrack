@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout';
 import { Card, CardContent, Button, Input, Select } from '@/components/ui';
 import { useData } from '@/lib/DataContext';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowLeft, Plus, Trash2, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Search, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import type { LineItemFormData } from '@/lib/types';
+import type { LineItemFormData, Service } from '@/lib/types';
 
 function NewEstimateContent() {
   const router = useRouter();
@@ -20,6 +20,26 @@ function NewEstimateContent() {
   const [notes, setNotes] = useState('');
   const [lineItems, setLineItems] = useState<LineItemFormData[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
+
+  // Service selector state
+  const [selectedSpecies, setSelectedSpecies] = useState('');
+
+  // Group services by species
+  const servicesBySpecies = useMemo(() => {
+    const groups: Record<string, Service[]> = {};
+    services.filter(s => s.is_active).forEach(service => {
+      const key = service.species || 'Other';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(service);
+    });
+    // Sort species alphabetically
+    return Object.fromEntries(
+      Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+    );
+  }, [services]);
+
+  // Get unique species list
+  const speciesList = Object.keys(servicesBySpecies);
 
   // Filter customers
   const filteredCustomers = customers.filter(c => {
@@ -181,29 +201,57 @@ function NewEstimateContent() {
       {/* Line Items */}
       <Card>
         <CardContent>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Line Items</h2>
-            <div className="flex gap-2">
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    addServiceItem(e.target.value);
-                    e.target.value = '';
-                  }
-                }}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              >
-                <option value="">+ From Price Book</option>
-                {services.filter(s => s.is_active).map(service => (
-                  <option key={service.service_id} value={service.service_id}>
-                    {service.description} - {formatCurrency(service.base_price)}
-                  </option>
-                ))}
-              </select>
+          <div className="flex flex-col gap-4 mb-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-gray-900">Line Items</h2>
               <Button variant="outline" size="sm" onClick={addCustomItem}>
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Custom</span>
+                <span className="hidden sm:inline">Custom Item</span>
               </Button>
+            </div>
+
+            {/* Two-step service selector */}
+            <div className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 rounded-xl">
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">1. Select Species</label>
+                <select
+                  value={selectedSpecies}
+                  onChange={(e) => setSelectedSpecies(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white"
+                >
+                  <option value="">Choose species...</option>
+                  {speciesList.map(species => (
+                    <option key={species} value={species}>
+                      {species} ({servicesBySpecies[species].length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="hidden sm:flex items-end pb-2">
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">2. Select Service</label>
+                <select
+                  disabled={!selectedSpecies}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      addServiceItem(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 bg-white disabled:bg-gray-100 disabled:text-gray-400"
+                >
+                  <option value="">{selectedSpecies ? 'Choose service...' : 'Select species first'}</option>
+                  {selectedSpecies && servicesBySpecies[selectedSpecies]?.map(service => (
+                    <option key={service.service_id} value={service.service_id}>
+                      {service.mount_type || service.description} - {formatCurrency(service.base_price)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
