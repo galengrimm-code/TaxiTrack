@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#ea580c"/>
+    </linearGradient>
+    <linearGradient id="antlerG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24"/>
+      <stop offset="100%" style="stop-color:#f97316"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="180" height="180" rx="40" fill="url(#bgGrad)"/>
+  <!-- Deer head centered -->
+  <g transform="translate(30, 15) scale(1.2)">
+    <!-- Left Antler -->
+    <path d="M25 45 Q20 35 15 20 Q12 15 8 12 M15 20 Q18 18 22 15 M15 20 Q13 22 10 25"
+          fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Right Antler -->
+    <path d="M75 45 Q80 35 85 20 Q88 15 92 12 M85 20 Q82 18 78 15 M85 20 Q87 22 90 25"
+          fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Head -->
+    <ellipse cx="50" cy="58" rx="22" ry="28" fill="white"/>
+    <!-- Ears -->
+    <ellipse cx="30" cy="48" rx="6" ry="10" fill="white" transform="rotate(-20 30 48)"/>
+    <ellipse cx="70" cy="48" rx="6" ry="10" fill="white" transform="rotate(20 70 48)"/>
+    <!-- Inner ears -->
+    <ellipse cx="30" cy="48" rx="3" ry="6" fill="#fcd34d" transform="rotate(-20 30 48)"/>
+    <ellipse cx="70" cy="48" rx="3" ry="6" fill="#fcd34d" transform="rotate(20 70 48)"/>
+    <!-- Eyes -->
+    <ellipse cx="40" cy="58" rx="4" ry="5" fill="#1e293b"/>
+    <ellipse cx="60" cy="58" rx="4" ry="5" fill="#1e293b"/>
+    <circle cx="41" cy="57" r="1.5" fill="white" opacity="0.8"/>
+    <circle cx="61" cy="57" r="1.5" fill="white" opacity="0.8"/>
+    <!-- Nose -->
+    <ellipse cx="50" cy="75" rx="8" ry="6" fill="#1e293b"/>
+    <ellipse cx="50" cy="74" rx="5" ry="3" fill="#374151"/>
+  </g>
+</svg>
