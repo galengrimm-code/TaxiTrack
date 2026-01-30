@@ -29,7 +29,7 @@ function CustomersContent() {
     phone: '',
     email: '',
     city: '',
-    state: 'MO',
+    state: 'OR',
     notes: '',
   });
 
