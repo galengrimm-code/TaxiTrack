@@ -57,13 +57,16 @@ export function generateId(prefix: string): string {
 /**
  * Generate a project ID in format YY.XX (e.g., 26.01, 26.02)
  */
-export function generateProjectId(existingProjects: { project_id: string }[]): string {
+export function generateProjectId(existingProjects: { project_id: string | number | null | undefined }[]): string {
   const year = new Date().getFullYear().toString().slice(-2);
-  const yearProjects = existingProjects.filter(p =>
-    p.project_id && p.project_id.startsWith(year + '.')
-  );
+  const yearProjects = existingProjects.filter(p => {
+    if (!p.project_id) return false;
+    const id = String(p.project_id);
+    return id.startsWith(year + '.');
+  });
   const maxNum = yearProjects.reduce((max, p) => {
-    const parts = p.project_id.split('.');
+    const id = String(p.project_id);
+    const parts = id.split('.');
     const num = parseInt(parts[1]) || 0;
     return num > max ? num : max;
   }, 0);
