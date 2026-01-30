@@ -4,3 +4,4 @@ export { Modal } from './Modal';
 export { Input } from './Input';
 export { Select } from './Select';
 export { StatusBadge } from './StatusBadge';
+export { DocumentActions, PrintableDocument } from './DocumentActions';
