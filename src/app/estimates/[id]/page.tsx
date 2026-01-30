@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout';
 import { Card, CardContent, Button, StatusBadge, DocumentActions, PrintableDocument } from '@/components/ui';
@@ -232,11 +232,10 @@ function EstimateDetailContent({ estimateId }: { estimateId: string }) {
   );
 }
 
-export default function EstimateDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+export default function EstimateDetailPage({ params }: { params: { id: string } }) {
   return (
     <AppShell>
-      <EstimateDetailContent estimateId={resolvedParams.id} />
+      <EstimateDetailContent estimateId={params.id} />
     </AppShell>
   );
 }
