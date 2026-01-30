@@ -87,7 +87,7 @@ function setupDatabase() {
       ['business_name','Your Taxidermy Business'],
       ['phone','(555) 123-4567'],
       ['address','123 Main Street'],
-      ['city_state_zip','Springfield, MO 65801'],
+      ['city_state_zip','Springfield, OR 97477'],
       ['email','info@yourbusiness.com'],
       ['default_deposit_percent','50']
     ]);
