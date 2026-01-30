@@ -15,6 +15,7 @@ function CustomersContent() {
   const { customers, addCustomer, updateCustomer, loading } = useData();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Auto-open modal if ?new=true
   useEffect(() => {
@@ -61,12 +62,19 @@ function CustomersContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingCustomer) {
-      await updateCustomer({ ...editingCustomer, ...form });
-    } else {
-      await addCustomer(form);
+    if (saving) return; // Prevent double submission
+
+    setSaving(true);
+    try {
+      if (editingCustomer) {
+        await updateCustomer({ ...editingCustomer, ...form });
+      } else {
+        await addCustomer(form);
+      }
+      setShowModal(false);
+    } finally {
+      setSaving(false);
     }
-    setShowModal(false);
   };
 
   if (loading) {
@@ -196,11 +204,11 @@ function CustomersContent() {
             />
           </div>
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)}>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              {editingCustomer ? 'Save Changes' : 'Add Customer'}
+            <Button type="submit" className="flex-1" disabled={saving}>
+              {saving ? 'Saving...' : editingCustomer ? 'Save Changes' : 'Add Customer'}
             </Button>
           </div>
         </form>

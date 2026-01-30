@@ -346,6 +346,7 @@ function SettingsContent() {
   const [connectionStatus, setConnectionStatus] = useState<{ success: boolean; message: string; needsSetup?: boolean } | null>(null);
   const [testing, setTesting] = useState(false);
   const [settingUp, setSettingUp] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
   
   const [businessInfo, setBusinessInfo] = useState({
     business_name: '',
@@ -431,13 +432,20 @@ function SettingsContent() {
   };
 
   const saveSettings = async () => {
-    api.setApiUrl(apiUrl);
-    
-    if (connected) {
-      await updateSettings(businessInfo as any);
-      alert('Settings saved!');
-    } else {
-      alert('Settings saved locally. Connect to Google Sheets to sync.');
+    if (savingSettings) return;
+
+    setSavingSettings(true);
+    try {
+      api.setApiUrl(apiUrl);
+
+      if (connected) {
+        await updateSettings(businessInfo as any);
+        alert('Settings saved!');
+      } else {
+        alert('Settings saved locally. Connect to Google Sheets to sync.');
+      }
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -583,8 +591,8 @@ function SettingsContent() {
         </CardContent>
       </Card>
 
-      <Button onClick={saveSettings} size="lg">
-        Save Settings
+      <Button onClick={saveSettings} size="lg" disabled={savingSettings}>
+        {savingSettings ? 'Saving...' : 'Save Settings'}
       </Button>
     </div>
   );

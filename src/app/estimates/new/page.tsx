@@ -115,6 +115,8 @@ function NewEstimateContent() {
 
   // Save estimate
   const handleSave = async () => {
+    if (saving) return; // Prevent double submission
+
     if (!customerId) {
       alert('Please select a customer');
       return;

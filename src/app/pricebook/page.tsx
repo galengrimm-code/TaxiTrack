@@ -15,6 +15,7 @@ function PriceBookContent() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Auto-open modal if ?new=true
   useEffect(() => {
@@ -71,12 +72,19 @@ function PriceBookContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingService) {
-      await updateService({ ...editingService, ...form });
-    } else {
-      await addService(form);
+    if (saving) return; // Prevent double submission
+
+    setSaving(true);
+    try {
+      if (editingService) {
+        await updateService({ ...editingService, ...form });
+      } else {
+        await addService(form);
+      }
+      setShowModal(false);
+    } finally {
+      setSaving(false);
     }
-    setShowModal(false);
   };
 
   if (loading) {
@@ -185,11 +193,11 @@ function PriceBookContent() {
             onChange={(e) => setForm({ ...form, base_price: Number(e.target.value) })}
           />
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)}>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              {editingService ? 'Save Changes' : 'Add Service'}
+            <Button type="submit" className="flex-1" disabled={saving}>
+              {saving ? 'Saving...' : editingService ? 'Save Changes' : 'Add Service'}
             </Button>
           </div>
         </form>
