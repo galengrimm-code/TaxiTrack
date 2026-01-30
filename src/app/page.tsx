@@ -65,53 +65,61 @@ function DashboardContent() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Briefcase className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Active Projects</p>
-              <p className="text-2xl font-bold text-gray-900">{activeProjects.length}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <Link href="/projects">
+          <Card hover>
+            <CardContent className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Briefcase className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Active Projects</p>
+                <p className="text-2xl font-bold text-gray-900">{activeProjects.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Ready for Pickup</p>
-              <p className="text-2xl font-bold text-gray-900">{readyForPickup.length}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <Link href="/projects?status=Ready">
+          <Card hover>
+            <CardContent className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Ready for Pickup</p>
+                <p className="text-2xl font-bold text-gray-900">{readyForPickup.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Outstanding</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(outstandingBalance)}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <Link href="/invoices?status=unpaid">
+          <Card hover>
+            <CardContent className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Outstanding</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(outstandingBalance)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">YTD Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(ytdRevenue)}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <Link href="/reports">
+          <Card hover>
+            <CardContent className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">YTD Revenue</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(ytdRevenue)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

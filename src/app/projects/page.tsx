@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout';
 import { Card, CardContent, Button, StatusBadge, Modal, Input, Select } from '@/components/ui';
 import { useData } from '@/lib/DataContext';
@@ -8,8 +9,17 @@ import { formatDate, PROJECT_STATUSES } from '@/lib/utils';
 import { Briefcase, Send } from 'lucide-react';
 
 function ProjectsContent() {
+  const searchParams = useSearchParams();
   const { projects, customers, getCustomer, updateProjectStatus, batchUpdateProjects, loading } = useData();
   const [filter, setFilter] = useState<string>('active');
+
+  // Read filter from URL on mount
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setFilter(statusParam);
+    }
+  }, [searchParams]);
   const [selected, setSelected] = useState<string[]>([]);
   const [showTanneryModal, setShowTanneryModal] = useState(false);
   const [tanneryForm, setTanneryForm] = useState({ tannery: '', date: new Date().toISOString().split('T')[0], notes: '' });
@@ -167,7 +177,9 @@ function ProjectsContent() {
 export default function ProjectsPage() {
   return (
     <AppShell>
-      <ProjectsContent />
+      <Suspense fallback={<div className="p-6 text-gray-500">Loading...</div>}>
+        <ProjectsContent />
+      </Suspense>
     </AppShell>
   );
 }

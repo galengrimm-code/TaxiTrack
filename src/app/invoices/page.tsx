@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout';
 import { Card, CardContent, Button, StatusBadge } from '@/components/ui';
 import { useData } from '@/lib/DataContext';
@@ -8,9 +10,26 @@ import { FileText } from 'lucide-react';
 import Link from 'next/link';
 
 function InvoicesContent() {
+  const searchParams = useSearchParams();
   const { invoices, getCustomer, loading } = useData();
+  const [filter, setFilter] = useState<string>('all');
 
-  const sorted = [...invoices].sort((a, b) => 
+  // Read filter from URL on mount
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setFilter(statusParam);
+    }
+  }, [searchParams]);
+
+  const filtered = invoices.filter(inv => {
+    if (filter === 'all') return true;
+    if (filter === 'unpaid') return inv.balance_due > 0;
+    if (filter === 'paid') return inv.status === 'Paid';
+    return inv.status === filter;
+  });
+
+  const sorted = [...filtered].sort((a, b) =>
     new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
   );
 
@@ -22,7 +41,24 @@ function InvoicesContent() {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-        <p className="text-gray-500">{invoices.length} total invoices</p>
+        <p className="text-gray-500">{filtered.length} invoices</p>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {['all', 'unpaid', 'Deposit Paid', 'paid'].map(status => (
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filter === status
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {status === 'all' ? 'All' : status === 'unpaid' ? 'Unpaid' : status === 'paid' ? 'Paid' : status}
+          </button>
+        ))}
       </div>
 
       <div className="space-y-4">
@@ -75,7 +111,9 @@ function InvoicesContent() {
 export default function InvoicesPage() {
   return (
     <AppShell>
-      <InvoicesContent />
+      <Suspense fallback={<div className="p-6 text-gray-500">Loading...</div>}>
+        <InvoicesContent />
+      </Suspense>
     </AppShell>
   );
 }
