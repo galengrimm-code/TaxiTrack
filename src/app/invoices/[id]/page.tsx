@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { AppShell } from '@/components/layout';
 import { Card, CardContent, Button, StatusBadge, DocumentActions, PrintableDocument } from '@/components/ui';
 import { useData } from '@/lib/DataContext';
@@ -206,10 +207,11 @@ function InvoiceDetailContent({ invoiceId }: { invoiceId: string }) {
   );
 }
 
-export default function InvoiceDetailPage({ params }: { params: { id: string } }) {
+export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   return (
     <AppShell>
-      <InvoiceDetailContent invoiceId={params.id} />
+      <InvoiceDetailContent invoiceId={id} />
     </AppShell>
   );
 }
