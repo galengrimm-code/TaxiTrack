@@ -12,7 +12,8 @@ import {
   BarChart3,
   Book,
   Settings,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -126,6 +127,19 @@ export function Sidebar({ syncing = false, connected = false, isOpen = true, onC
               <span className="font-medium">{item.label}</span>
             </Link>
           ))}
+        </div>
+
+        {/* Logout */}
+        <div className="px-3 pb-1">
+          <form action="/api/logout" method="POST">
+            <button
+              type="submit"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Sign Out</span>
+            </button>
+          </form>
         </div>
 
         {/* Sync Status */}
