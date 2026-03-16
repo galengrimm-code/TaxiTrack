@@ -33,7 +33,6 @@ function EstimatesContent() {
       const invoiceId = await convertEstimateToInvoice(estimateId);
       router.push(`/invoices/${invoiceId}`);
     } catch (error) {
-      console.error('Failed to convert:', error);
       alert('Failed to convert to invoice');
     }
     setConverting(null);

@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { cookies } from 'next/headers';
+import { timingSafeEqual } from 'crypto';
 
 const COOKIE_NAME = 'taxitrack_auth';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -35,7 +36,7 @@ export async function setAuthCookie(pin: string): Promise<void> {
   cookieStore.set(COOKIE_NAME, hash, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     maxAge: COOKIE_MAX_AGE,
     path: '/',
   });
@@ -50,7 +51,10 @@ export async function verifyAuth(): Promise<boolean> {
   if (!cookie?.value) return false;
 
   const expectedHash = await hashPin(process.env.AUTH_PIN || '');
-  return cookie.value === expectedHash;
+  const a = Buffer.from(cookie.value);
+  const b = Buffer.from(expectedHash);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
 
 /**

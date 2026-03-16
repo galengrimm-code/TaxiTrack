@@ -230,7 +230,6 @@ function NewEstimateContent() {
       });
       router.push(`/estimates/${estimateId}`);
     } catch (error) {
-      console.error('Failed to create estimate:', error);
       alert('Failed to create estimate');
     } finally {
       setSaving(false);

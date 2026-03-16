@@ -44,7 +44,6 @@ async function apiCall<T>(
 ): Promise<T | null> {
   const apiUrl = getApiUrl();
   if (!apiUrl) {
-    console.warn('No API URL configured');
     return null;
   }
 
@@ -61,10 +60,8 @@ async function apiCall<T>(
       return result.data ?? null;
     }
 
-    console.error('API Error:', result.error);
     return null;
-  } catch (err) {
-    console.error('API Call Failed:', err);
+  } catch {
     return null;
   }
 }
@@ -80,8 +77,7 @@ async function apiGet<T>(action: string): Promise<T | null> {
     const response = await fetch(`${apiUrl}?action=${action}`);
     const result: ApiResponse<T> = await response.json();
     return result.success ? (result.data ?? null) : null;
-  } catch (err) {
-    console.error('API GET Failed:', err);
+  } catch {
     return null;
   }
 }

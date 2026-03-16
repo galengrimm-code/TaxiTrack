@@ -77,7 +77,6 @@ export function DocumentActions({ title, documentId, onPrint, getShareData }: Do
         setTimeout(() => setShared(false), 2000);
       }
     } catch (err) {
-      console.error('Share failed:', err);
       // If user cancelled, that's ok
     } finally {
       setSharing(false);
@@ -99,7 +98,6 @@ export function DocumentActions({ title, documentId, onPrint, getShareData }: Do
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('PDF download failed:', err);
       // Fallback to print dialog
       window.print();
     } finally {

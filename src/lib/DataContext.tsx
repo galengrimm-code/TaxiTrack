@@ -32,7 +32,7 @@ function loadCache() {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) return JSON.parse(cached);
   } catch (e) {
-    console.warn('Failed to load cache:', e);
+    // Silently ignore cache load failures
   }
   return null;
 }
@@ -43,7 +43,7 @@ function saveCache(data: Record<string, unknown>) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(data));
   } catch (e) {
-    console.warn('Failed to save cache:', e);
+    // Silently ignore cache save failures
   }
 }
 
